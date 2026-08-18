@@ -46,6 +46,8 @@ Start a new OMP process after changing the allowlist. Existing sessions retain t
 Clone this repository, then place the agent definitions in OMP's user agent directory:
 
 ```bash
+git clone https://github.com/dsebban/skills.git
+cd skills
 mkdir -p ~/.omp/agent/agents
 cp agents/poteto-agent.md ~/.omp/agent/agents/
 cp agents/comment-sicko.md ~/.omp/agent/agents/
