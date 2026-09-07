@@ -3,13 +3,13 @@
 # Runs in CI (sync-upstream.yml) and locally. Idempotent.
 #
 # Port-owned (NEVER overwritten from upstream):
-#   skills/poteto-mode/SKILL.md   — OMP router adaptation
-#   skills/pstack-omp/            — OMP adapter
-#   skills/orchestrate-omp/       — OMP orchestration
-# Everything else in upstream skills/ is copied verbatim (framework-neutral
-# SKILL.md markdown that OMP reads as-is), INCLUDING poteto-mode playbooks
-# (playbooks are adapted lightly upstream but stay compatible; the PR exists
-# exactly so a human can eyeball drift).
+#   skills/poteto-mode/SKILL.md     — OMP router adaptation
+#   skills/poteto-mode/playbooks/   — OMP-adapted playbooks (drift REPORTED,
+#                                     see upstream-drift.md — never clobbered)
+#   skills/pstack-omp/              — OMP adapter
+#   skills/orchestrate-omp/         — OMP orchestration
+# Everything else copies from upstream THEN passes through the OMP adaptation
+# layer (scripts/adapt-omp.sh — rules documented in ADAPTATION.md).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -24,40 +24,58 @@ SRC="$WORK/upstream/pstack/skills"
 [ -d "$SRC" ] || { echo "no upstream skills dir found" >&2; exit 1; }
 
 CHANGED=0
+DRIFT_REPORT=""
+
 for d in "$SRC"/*; do
   [ -d "$d" ] || continue
   name="$(basename "$d")"
   case "$name" in
-    pstack-omp|orchestrate-omp) continue ;;                    # port-owned
+    pstack-omp|orchestrate-omp) continue ;;                       # port-owned
     poteto-mode)
-      # sync playbooks only; SKILL.md is the OMP router (port-owned)
-      mkdir -p "skills/poteto-mode/playbooks"
+      # SKILL.md and playbooks are port-owned. Report drift, never apply.
       for pb in "$d"/playbooks/*.md; do
         [ -e "$pb" ] || continue
-        if ! cmp -s "$pb" "skills/poteto-mode/playbooks/$(basename "$pb")"; then
-          cp "$pb" "skills/poteto-mode/playbooks/"
-          echo "playbook updated: $(basename "$pb")"
-          CHANGED=1
+        ours="skills/poteto-mode/playbooks/$(basename "$pb")"
+        if [ ! -f "$ours" ]; then
+          DRIFT_REPORT+="- NEW upstream playbook (needs manual OMP port): $(basename "$pb")"$'\n'
+        elif ! cmp -s "$pb" "$ours"; then
+          DRIFT_REPORT+="- drifted: $(basename "$pb")"$'\n'
         fi
       done
-      # references/ and other nested docs also sync
-      for sub in references docs; do
-        [ -d "$d/$sub" ] || continue
-        mkdir -p "skills/poteto-mode/$sub"
-        cp -R "$d/$sub/." "skills/poteto-mode/$sub/"
-        CHANGED=1
+      for ours in skills/poteto-mode/playbooks/*.md; do
+        [ -e "$ours" ] || continue
+        if [ ! -e "$d/playbooks/$(basename "$ours")" ]; then
+          DRIFT_REPORT+="- removed upstream: $(basename "$ours")"$'\n'
+        fi
       done
       ;;
     *)
-      if [ ! -d "skills/$name" ] || ! diff -rq "$d" "skills/$name" >/dev/null 2>&1; then
+      tmp="$(mktemp -d)"
+      cp -R "$d" "$tmp/$name"
+      # adapt every text file in the copy
+      find "$tmp" -type f \( -name '*.md' -o -name '*.sh' -o -name '*.json' \) \
+        -exec bash scripts/adapt-omp.sh {} \;
+      if [ ! -d "skills/$name" ] || ! diff -rq "$tmp/$name" "skills/$name" >/dev/null 2>&1; then
         rm -rf "skills/$name"
-        cp -R "$d" "skills/$name"
-        echo "skill synced: $name"
+        cp -R "$tmp/$name" "skills/$name"
+        echo "skill synced+adapted: $name"
         CHANGED=1
       fi
+      rm -rf "$tmp"
       ;;
   esac
 done
+
+# write drift report (always rewrite so it reflects reality)
+if [ -n "$DRIFT_REPORT" ]; then
+  printf 'Upstream poteto-mode playbook drift (needs manual OMP port — do NOT copy verbatim):\n\n%s\n' "$DRIFT_REPORT" > upstream-drift.md
+  git add upstream-drift.md
+  CHANGED=1
+  echo "drift report updated"
+elif [ -f upstream-drift.md ]; then
+  git rm -q upstream-drift.md 2>/dev/null || rm -f upstream-drift.md
+  CHANGED=1
+fi
 
 if [ "$CHANGED" -eq 0 ]; then
   echo "upstream in sync — nothing to do"
@@ -65,5 +83,4 @@ if [ "$CHANGED" -eq 0 ]; then
 fi
 
 git add skills/
-echo "SYNCED=1" >> "$GITHUB_OUTPUT" 2>/dev/null || true
 exit 0
