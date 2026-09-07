@@ -25,10 +25,10 @@ jobs:
           branch: chore/upstream-pstack-sync
           delete-branch: true
           title: "chore: sync upstream cursor/plugins pstack"
+          commit-message: "chore: sync upstream pstack"
           body: |
             Automated daily sync from [cursor/plugins/pstack](https://github.com/cursor/plugins/tree/main/pstack).
 
             - Port-owned files are never overwritten: `poteto-mode/SKILL.md`, `pstack-omp/`, `orchestrate-omp/`.
             - `poteto-mode` playbooks + references sync from upstream — **review these for Cursor-specific references** that need the OMP adaptation.
             - All other upstream skills copy verbatim (framework-neutral SKILL.md).
-        commit-message: "chore: sync upstream pstack (${{ github.run_id }})"
