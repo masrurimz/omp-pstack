@@ -9,11 +9,13 @@ Upstream poteto-mode playbook drift (needs manual OMP port — do NOT copy verba
 - drifted: eval.md
 - drifted: feature.md
 - drifted: hillclimb.md
+- drifted: investigation.md
 - drifted: multi-phase-plan.md
 - drifted: opening-a-pr.md
 - drifted: orchestrate.md
 - drifted: pause-safely.md
 - drifted: perf-issue.md
+- drifted: prototype.md
 - drifted: refactoring.md
 - drifted: runtime-forensics.md
 - drifted: session-pickup.md
