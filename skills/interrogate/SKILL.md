@@ -33,14 +33,13 @@ Write one clear paragraph. If you're unsure about the intent, ask the user befor
 
 ## Step 3, Spawn Reviewers
 
-Launch all reviewers in a single message using the Task tool. Use the `interrogate reviewers` list from `~/.omp/agent/config.yml modelRoles` when present, one reviewer per entry, extending or shrinking the Reviewer A/B/C/D labels below to the configured entry count. Otherwise use the table defaults.
+Launch all reviewers in a single message using the Task tool. Use the `interrogate reviewers` list from `~/.omp/agent/config.yml modelRoles` when present, one reviewer per entry, extending or shrinking the Reviewer A/B/C labels below to the configured entry count. Otherwise use the table defaults.
 
 | Subagent | Default model |
 |----------|---------------|
-| Reviewer A | `your slow-role model` |
+| Reviewer A | `claude-opus-5-5-max` |
 | Reviewer B | `your default-role model` |
-| Reviewer C | `your smol-role model` |
-| Reviewer D | `your task-role model` |
+| Reviewer C | `grok-4.7-xhigh-fast` |
 
 For each reviewer:
 - dispatch via the OMP `task` tool (default worker)
