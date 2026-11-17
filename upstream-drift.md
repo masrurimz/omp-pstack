@@ -12,7 +12,6 @@ Upstream poteto-mode playbook drift (needs manual OMP port — do NOT copy verba
 - drifted: investigation.md
 - drifted: multi-phase-plan.md
 - drifted: opening-a-pr.md
-- drifted: orchestrate.md
 - drifted: pause-safely.md
 - drifted: perf-issue.md
 - drifted: prototype.md
@@ -23,4 +22,5 @@ Upstream poteto-mode playbook drift (needs manual OMP port — do NOT copy verba
 - drifted: trace-forensics.md
 - drifted: visual-parity.md
 - drifted: worktree-cleanup.md
+- removed upstream: orchestrate.md
 
